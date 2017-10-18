@@ -13,12 +13,13 @@ namespace LogRead
         public static void Main(string[] args)
         {
             RedisHelper r = new RedisHelper();
-
-            Dictionary<string, object> dic = new Dictionary<string, object>();
-            //dic.Add("counts", HospStatistics(Read()));
-            //dic.Add("phone", PhoneSendCounts(Read(), 1));
-            //r.Set(dic);
-            dic = r.Get();
+            MyFileReader file = new MyFileReader("e://20171011.txt");
+            file.Create();
+            //Dictionary<string, object> dic = new Dictionary<string, object>();
+            ////dic.Add("counts", HospStatistics(Read()));
+            ////dic.Add("phone", PhoneSendCounts(Read(), 1));
+            ////r.Set(dic);
+            //dic = r.Get();
         }
 
         //需要指定文件路径（包括文件名称）
