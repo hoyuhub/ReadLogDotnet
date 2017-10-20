@@ -10,17 +10,62 @@ namespace LogRead
 {
     public class Program
     {
+
+        private static int Position = 0;
         public static void Main(string[] args)
         {
-            RedisHelper r = new RedisHelper();
-            MyFileReader file = new MyFileReader("e://20171011.txt");
-            file.Create();
-            //Dictionary<string, object> dic = new Dictionary<string, object>();
-            ////dic.Add("counts", HospStatistics(Read()));
-            ////dic.Add("phone", PhoneSendCounts(Read(), 1));
-            ////r.Set(dic);
-            //dic = r.Get();
+            int count = 0;
+            using (FileStream fs = new FileStream("e://test.txt", FileMode.Open, FileAccess.Read))
+            {
+                long lenght = fs.Length;
+                List<string> list = new List<string>();
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        list.Add(line);
+                    }
+                }
+                string s = list[list.Count - 1];
+                count = Encoding.Default.GetByteCount(s);
+                Console.WriteLine("行数：" + list.Count);
+                list.ForEach(d => Console.WriteLine(d));
+            }
+            using (FileStream fs = new FileStream("e://test.txt", FileMode.Open, FileAccess.Read))
+            {
+                fs.Position = fs.Length - count;
+                List<string> list = new List<string>();
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        list.Add(line);
+                    }
+                }
+                string s = list[list.Count - 1];
+                count = Encoding.UTF8.GetByteCount(s);
+                Console.WriteLine("行数：" + list.Count);
+                list.ForEach(d => Console.WriteLine(d));
+            }
+
         }
+
+
+        public static List<string> Lines(string path)
+        {
+            List<string> list = new List<string>();
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                if (Position == 0)
+                {
+
+                }
+            }
+            return list;
+        }
+
 
         //需要指定文件路径（包括文件名称）
         public static List<Entity> Read()

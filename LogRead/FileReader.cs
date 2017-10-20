@@ -14,6 +14,8 @@ namespace LogRead
         private bool isStart;
         private int threadCompleteCount;
         public event EventHandler FileReadEnd;//文件读取完成执行的委托事件
+
+        
         public bool IsStart
         {
             get { return isStart; }
@@ -76,7 +78,7 @@ namespace LogRead
                         stream.Position = startPoint;
                         FileReadPoint fPoint = new FileReadPoint();
                         fPoint.StartPoint = startPoint;
-                       // GetPoint(fPoint, stream, length);
+                        // GetPoint(fPoint, stream, length);
                         if (fPoint.StartPoint + fPoint.ReadCount > length)
                         {
                             fPoint.ReadCount = length - fPoint.StartPoint;
@@ -121,6 +123,7 @@ namespace LogRead
                 using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
                 {
                     stream.Position = fp.StartPoint;
+                    
                     ThreadStream threadStream = new ThreadStream(stream, fp);
                     DoFileRead(threadStream);
                 }
