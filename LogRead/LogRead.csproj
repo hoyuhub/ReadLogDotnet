@@ -55,16 +55,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileReadPoint.cs" />
-    <Compile Include="MyFileReader.cs" />
+    <Compile Include="Plan B\FileReadPoint.cs" />
+    <Compile Include="Plan B\MyFileReader.cs" />
+    <Compile Include="Plan C\Arithmetics\Arithmetic.cs" />
+    <Compile Include="Plan C\Entitys\Counts.cs" />
+    <Compile Include="Plan C\Entitys\Entity.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FileReader.cs" />
+    <Compile Include="Plan B\FileReader.cs" />
     <Compile Include="RedisHelper.cs" />
-    <Compile Include="ThreadStream.cs" />
+    <Compile Include="Plan B\ThreadStream.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
