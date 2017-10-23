@@ -6,10 +6,10 @@ using System.Text;
 namespace LogRead.Plan_C.Entitys
 {
     //提炼日志之后得到的实体
-    public class Entity
+    public class LogEntity
     {
-        public Entity() { }
-        public Entity(DateTime time, string json, string url, string hospid, string phone)
+        public LogEntity() { }
+        public LogEntity(DateTime time, string json, string url, string hospid, string phone)
         {
             this.time = time;
             this.json = json;

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using LogRead.Plan_C.Arithmetics;
+using System.Threading;
 
 namespace LogRead
 {
@@ -14,12 +15,13 @@ namespace LogRead
         {
             string path = "e:\\logfile.log";
             Arithmetic ar = new Arithmetic();
-            while (true)
-            {
-            ar.ListLine(path,ref Position);
-            }
+         
+            ar.GetLogEntitys( ar.ListLine(path, ref Position));
+            Program p = new Program();
+            Thread t1 = new Thread(new ThreadStart());
+
         }
-       
+
     }
 
 }

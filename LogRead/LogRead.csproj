@@ -59,7 +59,7 @@
     <Compile Include="Plan B\MyFileReader.cs" />
     <Compile Include="Plan C\Arithmetics\Arithmetic.cs" />
     <Compile Include="Plan C\Entitys\Counts.cs" />
-    <Compile Include="Plan C\Entitys\Entity.cs" />
+    <Compile Include="Plan C\Entitys\LogEntity.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Plan B\FileReader.cs" />
