@@ -15,13 +15,12 @@ namespace LogRead.Plan_C.Arithmetics
 {
     public class Arithmetic
     {
-        public Arithmetic() { }
+        private List<string> listStr = new List<string>();
 
-        public Arithmetic(string path,ref long Position)
-        {
-        
-            Thread t1 = new Thread(new ThreadStart(ListLine(path,ref Position)));
-        }
+        private string path;
+
+        private long Position = 0L;
+
 
         #region 线程一
 
@@ -31,29 +30,31 @@ namespace LogRead.Plan_C.Arithmetics
         /// </summary>
         /// <param name="path">文件路径</param>
         /// <returns></returns>
-        public List<string> ListLine(string path, ref long Position)
+        public void ListLine()
         {
-            List<string> list = new List<string>();
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            lock (this)
             {
-                if (Position != 0L) fs.Position = Position;
-                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    string line = string.Empty;
-                    while ((line = sr.ReadLine()) != null)
+                    if (Position != 0L) fs.Position = Position;
+                    using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
                     {
-                        list.Add(line);
-                        if (list.Count == 100)
+                        string line = string.Empty;
+                        while ((line = sr.ReadLine()) != null)
                         {
-                            Position = fs.Length;
-                            return list;
+                            if (listStr.Count == 100)
+                            {
+                                Monitor.Pulse(this);
+                                Monitor.Wait(this);
+                            }
+                            listStr.Add(line);
                         }
+                        Position = fs.Length;
+                        Monitor.Pulse(this);
                     }
-                    Position = fs.Length;
                 }
             }
 
-            return list;
 
             #region 内存映射
             //using (MemoryMappedFile mmf = MemoryMappedFile.CreateFromFile(path))
@@ -88,13 +89,13 @@ namespace LogRead.Plan_C.Arithmetics
         /// </summary>
         /// <param name="list">获取到的文本</param>
         /// <returns></returns>
-        public List<LogEntity> GetLogEntitys(List<string> list)
+        public List<LogEntity> GetLogEntitys()
         {
             List<LogEntity> logList = new List<LogEntity>();
             //定义正则表达式
             string pattern = @"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3} \[\d+] [A-Z]+ .* - Request .* (\{.*}) ([a-z]+|[a-z]+/[a-z]+)";
 
-            foreach (string str in list)
+            foreach (string str in listStr)
             {
                 Match match = Regex.Match(str, pattern);
                 //解析符合表达式的内容添加到集合里
@@ -122,61 +123,66 @@ namespace LogRead.Plan_C.Arithmetics
         }
 
         //统计每家医院每秒调用次数
-        public List<Dictionary<string, string>> HospStatistics(List<LogEntity> list)
+        public void HospStatistics()
         {
-            var result =
-            list.GroupBy(
-                 e => e.url,
-                  (url, urlGroup) => new
-                  {
-                      url,
-                      hospGroups = urlGroup
-                      .GroupBy(
-                         e2 => e2.hospid,
-                          (hospid, hospGroup) => new
-                          {
-                              hospid,
-                              timeGroups = hospGroup
-                              .OrderBy(e3 => e3.time)
-                              .GroupBy(e3 => e3.time)
-                              .Select(g => new { time = g.Key, count = g.Count() })
-                          }
-                          ).Select(e4 => new
-                          {
-                              hospid = e4.hospid,
-                              timeGroups = e4.timeGroups,
-                              timeGroupsCount = e4.timeGroups.Count()
-                          }
-                                 )
-                  }
-                  ).Select(s => new
-                  {
-                      url = s.url,
-                      hospGroups = s.hospGroups
-                  }
-                        );
-
-            List<Counts> listCounts = new List<Counts>();
-            List<Dictionary<string, string>> listDayCount = new List<Dictionary<string, string>>();
-            foreach (var e in result)
+            lock (this)
             {
-                foreach (var e2 in e.hospGroups)
+                List<LogEntity> list = GetLogEntitys();
+                listStr.Clear();
+                Monitor.Pulse(this);
+                var result =
+                list.GroupBy(
+                     e => e.url,
+                      (url, urlGroup) => new
+                      {
+                          url,
+                          hospGroups = urlGroup
+                          .GroupBy(
+                             e2 => e2.hospid,
+                              (hospid, hospGroup) => new
+                              {
+                                  hospid,
+                                  timeGroups = hospGroup
+                                  .OrderBy(e3 => e3.time)
+                                  .GroupBy(e3 => e3.time)
+                                  .Select(g => new { time = g.Key, count = g.Count() })
+                              }
+                              ).Select(e4 => new
+                              {
+                                  hospid = e4.hospid,
+                                  timeGroups = e4.timeGroups,
+                                  timeGroupsCount = e4.timeGroups.Count()
+                              }
+                                     )
+                      }
+                      ).Select(s => new
+                      {
+                          url = s.url,
+                          hospGroups = s.hospGroups
+                      }
+                            );
+
+                List<Counts> listCounts = new List<Counts>();
+                List<Dictionary<string, string>> listDayCount = new List<Dictionary<string, string>>();
+                foreach (var e in result)
                 {
-                    int dayCount = 0;
-                    foreach (var e3 in e2.timeGroups)
+                    foreach (var e2 in e.hospGroups)
                     {
-                        listCounts.Add(new Counts(e.url, e2.hospid, e3.count, e3.time));
-                        dayCount += e3.count;
+                        int dayCount = 0;
+                        foreach (var e3 in e2.timeGroups)
+                        {
+                            listCounts.Add(new Counts(e.url, e2.hospid, e3.count, e3.time));
+                            dayCount += e3.count;
+                        }
+                        Dictionary<string, string> dic = new Dictionary<string, string>();
+                        dic.Add("url", e.url);
+                        dic.Add("hospid", e2.hospid);
+                        dic.Add("dayCount", dayCount.ToString());
+                        listDayCount.Add(dic);
                     }
-                    Dictionary<string, string> dic = new Dictionary<string, string>();
-                    dic.Add("url", e.url);
-                    dic.Add("hospid", e2.hospid);
-                    dic.Add("dayCount", dayCount.ToString());
-                    listDayCount.Add(dic);
                 }
             }
 
-            return listDayCount;
         }
 
         #endregion

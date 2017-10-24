@@ -13,13 +13,12 @@ namespace LogRead
         private static long Position = 0L;
         public static void Main(string[] args)
         {
-            string path = "e:\\logfile.log";
             Arithmetic ar = new Arithmetic();
-         
-            ar.GetLogEntitys( ar.ListLine(path, ref Position));
-            Program p = new Program();
-            Thread t1 = new Thread(new ThreadStart());
 
+            Thread t1 = new Thread(new ThreadStart(ar.ListLine));
+            Thread t2 = new Thread(new ThreadStart(ar.HospStatistics));
+            t1.Start();
+            t2.Start();
         }
 
     }
