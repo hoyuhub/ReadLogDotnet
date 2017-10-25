@@ -19,6 +19,7 @@ namespace LogRead
             Thread t2 = new Thread(new ThreadStart(ar.HospStatistics));
             t1.Start();
             t2.Start();
+
         }
 
     }

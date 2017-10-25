@@ -15,11 +15,26 @@ namespace LogRead.Plan_C.Arithmetics
 {
     public class Arithmetic
     {
+        //文本行公共区
         private List<string> listStr = new List<string>();
 
-        private string path;
+        //日志文件路路径
+        private string path = "e:\\logfile.log";
 
+        //本次读取是否完毕
+        private bool flag = false;
+
+        //文件流读取起始位置
         private long Position = 0L;
+
+        //每家医院每个接口每天的调用次数
+        private List<Count> listDayCount = new List<Count>();
+
+        //每家医院每个接口没秒的调用次数
+        private List<Count> listSecondCount = new List<Count>();
+
+        //每个手机号每分钟调用指定接口的次数
+        private List<Count> listPhoneCount = new List<Count>();
 
 
         #region 线程一
@@ -44,37 +59,17 @@ namespace LogRead.Plan_C.Arithmetics
                         {
                             if (listStr.Count == 100)
                             {
-                                Monitor.Pulse(this);
                                 Monitor.Wait(this);
                             }
                             listStr.Add(line);
                         }
                         Position = fs.Length;
+
                         Monitor.Pulse(this);
+                        flag = true;
                     }
                 }
             }
-
-
-            #region 内存映射
-            //using (MemoryMappedFile mmf = MemoryMappedFile.CreateFromFile(path))
-            //{
-            //    using (MemoryMappedViewStream mmvs = mmf.CreateViewStream(Position, 200))
-            //    {
-            //        using (StreamReader sr = new StreamReader(mmvs, Encoding.UTF8))
-            //        {
-            //            string line = string.Empty;
-            //            while ((line = sr.ReadLine()) != null)
-            //            {
-            //                list.Add(line);
-            //            }
-            //            long l = Encoding.Default.GetBytes(list[list.Count - 1]).LongLength;
-            //            Console.WriteLine("内容：" + list[list.Count - 1]);
-            //            Console.WriteLine("最后一条记录的长度：" + l);
-            //        }
-            //    }
-            //} 
-            #endregion
 
         }
 
@@ -122,65 +117,85 @@ namespace LogRead.Plan_C.Arithmetics
             return logList;
         }
 
-        //统计每家医院每秒调用次数
+        /// <summary>
+        /// 统计每家医院每个接口每秒的调用次数
+        /// 统计每家医院每个接口每天的调用次数
+        /// </summary>
         public void HospStatistics()
         {
             lock (this)
             {
-                List<LogEntity> list = GetLogEntitys();
-                listStr.Clear();
-                Monitor.Pulse(this);
-                var result =
-                list.GroupBy(
-                     e => e.url,
-                      (url, urlGroup) => new
-                      {
-                          url,
-                          hospGroups = urlGroup
-                          .GroupBy(
-                             e2 => e2.hospid,
-                              (hospid, hospGroup) => new
-                              {
-                                  hospid,
-                                  timeGroups = hospGroup
-                                  .OrderBy(e3 => e3.time)
-                                  .GroupBy(e3 => e3.time)
-                                  .Select(g => new { time = g.Key, count = g.Count() })
-                              }
-                              ).Select(e4 => new
-                              {
-                                  hospid = e4.hospid,
-                                  timeGroups = e4.timeGroups,
-                                  timeGroupsCount = e4.timeGroups.Count()
-                              }
-                                     )
-                      }
-                      ).Select(s => new
-                      {
-                          url = s.url,
-                          hospGroups = s.hospGroups
-                      }
-                            );
-
-                List<Counts> listCounts = new List<Counts>();
-                List<Dictionary<string, string>> listDayCount = new List<Dictionary<string, string>>();
-                foreach (var e in result)
+                while (true)
                 {
-                    foreach (var e2 in e.hospGroups)
+                    if (listStr.Count > 0)
                     {
-                        int dayCount = 0;
-                        foreach (var e3 in e2.timeGroups)
+                        //根据问本行公共区的到需要处理的数据，并清空公共区（消费）
+                        List<LogEntity> list = GetLogEntitys();
+                        listStr.Clear();
+
+                        //分别按照接口、医院、时间分组，返回对应结果
+                        var result =
+                        list.GroupBy(
+                             e => e.url,
+                              (url, urlGroup) => new
+                              {
+                                  url,
+                                  hospGroups = urlGroup
+                                  .GroupBy(
+                                     e2 => e2.hospid,
+                                      (hospid, hospGroup) => new
+                                      {
+                                          hospid,
+                                          timeGroups = hospGroup
+                                          .OrderBy(e3 => e3.time)
+                                          .GroupBy(e3 => e3.time)
+                                          .Select(g => new { time = g.Key, count = g.Count() })
+                                      }
+                                      ).Select(e4 => new
+                                      {
+                                          hospid = e4.hospid,
+                                          timeGroups = e4.timeGroups,
+                                          timeGroupsCount = e4.timeGroups.Count()
+                                      }
+                                             )
+                              }
+                              ).Select(s => new
+                              {
+                                  url = s.url,
+                                  hospGroups = s.hospGroups
+                              }
+                                    );
+
+                        foreach (var e in result)
                         {
-                            listCounts.Add(new Counts(e.url, e2.hospid, e3.count, e3.time));
-                            dayCount += e3.count;
+                            foreach (var e2 in e.hospGroups)
+                            {
+                                foreach (var e3 in e2.timeGroups)
+                                {
+                                    //将按秒分组的数据取出
+                                    listSecondCount.Add(new Count(e.url, e2.hospid, e3.count, e3.time));
+                                    string daytime = e3.time.Year + "-" + e3.time.Month + "-" + e3.time.Day;
+                                    Count count = listDayCount.FindLast(d => { return d.daytime == daytime; });
+
+                                }
+
+                            }
                         }
-                        Dictionary<string, string> dic = new Dictionary<string, string>();
-                        dic.Add("url", e.url);
-                        dic.Add("hospid", e2.hospid);
-                        dic.Add("dayCount", dayCount.ToString());
-                        listDayCount.Add(dic);
+
+                        //如果本次读取已完成，跳出死循环
+                        if (flag) { break; }
+
+                        Monitor.Pulse(this);
+
+                    }
+                    else
+                    {
+                        Monitor.Wait(this);
                     }
                 }
+
+
+
             }
 
         }
@@ -189,7 +204,10 @@ namespace LogRead.Plan_C.Arithmetics
 
 
 
-
+        public void InsertTest()
+        {
+            Console.WriteLine("zhixing" + listDic.Count);
+        }
 
 
 
