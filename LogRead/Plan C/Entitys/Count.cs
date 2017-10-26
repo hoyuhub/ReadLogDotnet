@@ -32,6 +32,13 @@ namespace LogRead.Plan_C.Entitys
             this.time = time;
         }
 
+        public Count(string phone, string minuteTime, int count)
+        {
+            this.phone = phone;
+            this.minutetime = minuteTime;
+            this.count = count;
+        }
+
         public string phone { get; set; }
         public string url { get; set; }
         public string hospid { get; set; }
@@ -39,6 +46,7 @@ namespace LogRead.Plan_C.Entitys
         public int count { get; set; }
         public string daytime { get; set; }
         public string secondtime { get; set; }
+        public string minutetime { get; set; }
 
     }
 }

@@ -13,7 +13,7 @@ namespace LogRead
         {
             using (RedisClient client = new RedisClient())
             {
-                client.Set("15:44",dic);
+                client.Set(dic["key"].ToString(),dic);
             }
         }
 

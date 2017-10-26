@@ -99,6 +99,7 @@ namespace LogRead.Plan_C.Arithmetics
                     Dictionary<string, object> dic = new Dictionary<string, object>();
                     string hospid = string.Empty;
                     string phone = string.Empty;
+                    dic = JsonConvert.DeserializeObject<Dictionary<string, object>>(match.Groups[2].ToString());
                     if (dic.Keys.Contains("request"))
                     {
                         Dictionary<string, string> dicRequest = JsonConvert.DeserializeObject<Dictionary<string, string>>(dic["request"].ToString());
@@ -109,6 +110,7 @@ namespace LogRead.Plan_C.Arithmetics
                         if (dicRequest.Keys.Contains("phone"))
                         {
                             phone = dicRequest["phone"];
+
                         }
                     }
                     logList.Add(new LogEntity(Convert.ToDateTime(match.Groups[1].Value), match.Groups[2].Value, match.Groups[3].Value, hospid, phone));
@@ -131,8 +133,9 @@ namespace LogRead.Plan_C.Arithmetics
                     {
                         //根据问本行公共区的到需要处理的数据，并清空公共区（消费）
                         List<LogEntity> list = GetLogEntitys();
+                        //执行获取手机短讯接口调用查询方法
+                        PhoneSendCounts(list);
                         listStr.Clear();
-
                         //分别按照接口、医院、时间分组，返回对应结果
                         var result =
                         list.GroupBy(
@@ -175,13 +178,25 @@ namespace LogRead.Plan_C.Arithmetics
                                     //将按秒分组的数据取出
                                     listSecondCount.Add(new Count(e.url, e2.hospid, e3.count, e3.time));
                                     string daytime = e3.time.Year + "-" + e3.time.Month + "-" + e3.time.Day;
-                                    Count count = listDayCount.FindLast(d => { return d.daytime == daytime; });
-
+                                    //获取每个医院每个接口当天的调用次数
+                                    bool thisday = false;
+                                    foreach (Count c in listDayCount)
+                                    {
+                                        if (c.daytime == daytime)
+                                        {
+                                            thisday = true;
+                                            c.count += e3.count;
+                                            break;
+                                        }
+                                    }
+                                    if (!thisday)
+                                    {
+                                        listDayCount.Add(new Count(e.url, e2.hospid, e3.count, daytime));
+                                    }
                                 }
 
                             }
                         }
-
                         //如果本次读取已完成，跳出死循环
                         if (flag) { break; }
 
@@ -194,20 +209,22 @@ namespace LogRead.Plan_C.Arithmetics
                     }
                 }
 
+                //在这里执行数据库插入操作
 
-
+                RedisHelper re = new RedisHelper();
+                Dictionary<string, object> dic = new Dictionary<string, object>();
+                string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                dic.Add("key", "log_" + now);
+                dic.Add("listDayCount", listDayCount);
+                dic.Add("listSecondCount", listSecondCount);
+                dic.Add("listPhoneCount", listPhoneCount);
+                re.Set(dic);
             }
 
         }
 
         #endregion
 
-
-
-        public void InsertTest()
-        {
-            Console.WriteLine("zhixing" + listDic.Count);
-        }
 
 
 
@@ -251,30 +268,32 @@ namespace LogRead.Plan_C.Arithmetics
 
         //按手机号统计一段时间内短讯发送接口的调用此时
         //时间单位：分钟
-        public List<Dictionary<string, string>> PhoneSendCounts(List<LogEntity> list, int minute, string phone = "null", string url = "null")
+        public void PhoneSendCounts(List<LogEntity> list)
         {
-            DateTime dt = Convert.ToDateTime("2017-10-11 14:49:10");
-            List<Dictionary<string, string>> listDic = new List<Dictionary<string, string>>();
-            if (phone == "null")
+
+            list = GetLogEntitys();
+            foreach (LogEntity l in list)
             {
-                var Counts = list.Where(d => d.time > dt && d.url == (url == "null" ? "sms/send" : url)).GroupBy(d => d.phone).Select(d => new { phone = d.Key, count = d.Count() });
-                foreach (var d in Counts)
+                string minuteTime = l.time.ToString("yyyy-MM-dd HH:mm:00");
+                bool thisMinute = false;
+                foreach (Count c in listPhoneCount)
                 {
-                    Dictionary<string, string> dic = new Dictionary<string, string>();
-                    dic.Add("phone", d.phone);
-                    dic.Add("count", d.count.ToString());
-                    listDic.Add(dic);
+                    if (string.Compare(c.minutetime, minuteTime) == 0 && string.Compare(c.phone, l.phone) == 0)
+                    {
+                        c.count += 1;
+                        thisMinute = true;
+                        break;
+                    }
                 }
+                if (!thisMinute)
+                {
+                    if (!string.IsNullOrEmpty(l.phone))
+                        listPhoneCount.Add(new Count(l.phone, minuteTime, 1));
+                }
+
+
             }
-            else
-            {
-                var Counts = list.Where(d => d.time > dt && d.phone == phone && d.url == (url == "null" ? "sms/send" : url)).Count();
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                dic.Add("phone", phone);
-                dic.Add("count", Counts.ToString());
-                listDic.Add(dic);
-            }
-            return listDic;
+
         }
 
     }
