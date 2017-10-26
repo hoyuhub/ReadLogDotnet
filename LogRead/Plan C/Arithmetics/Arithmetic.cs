@@ -19,7 +19,7 @@ namespace LogRead.Plan_C.Arithmetics
         private List<string> listStr = new List<string>();
 
         //日志文件路路径
-        private string path = "e:\\logfile.log";
+        private string path = "e:\\20171011.txt";
 
         //本次读取是否完毕
         private bool flag = false;
@@ -35,6 +35,9 @@ namespace LogRead.Plan_C.Arithmetics
 
         //每个手机号每分钟调用指定接口的次数
         private List<Count> listPhoneCount = new List<Count>();
+
+        //用于设置redis key的时间
+        private string redisKeyTime = string.Empty;
 
 
         #region 线程一
@@ -59,14 +62,15 @@ namespace LogRead.Plan_C.Arithmetics
                         {
                             if (listStr.Count == 100)
                             {
+                                Monitor.Pulse(this);
                                 Monitor.Wait(this);
                             }
                             listStr.Add(line);
                         }
                         Position = fs.Length;
 
-                        Monitor.Pulse(this);
                         flag = true;
+                        Monitor.Pulse(this);
                     }
                 }
             }
@@ -198,7 +202,10 @@ namespace LogRead.Plan_C.Arithmetics
                             }
                         }
                         //如果本次读取已完成，跳出死循环
-                        if (flag) { break; }
+                        if (flag)
+                        {
+                            break;
+                        }
 
                         Monitor.Pulse(this);
 
@@ -213,8 +220,8 @@ namespace LogRead.Plan_C.Arithmetics
 
                 RedisHelper re = new RedisHelper();
                 Dictionary<string, object> dic = new Dictionary<string, object>();
-                string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                dic.Add("key", "log_" + now);
+               
+                dic.Add("key", "log_" + redisKeyTime);
                 dic.Add("listDayCount", listDayCount);
                 dic.Add("listSecondCount", listSecondCount);
                 dic.Add("listPhoneCount", listPhoneCount);

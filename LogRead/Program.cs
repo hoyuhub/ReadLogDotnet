@@ -15,13 +15,11 @@ namespace LogRead
         public static void Main(string[] args)
         {
             Arithmetic ar = new Arithmetic();
+            Thread t1 = new Thread(new ThreadStart(ar.ListLine));
+            Thread t2 = new Thread(new ThreadStart(ar.HospStatistics));
+            t1.Start();
+            t2.Start();
 
-            //Thread t1 = new Thread(new ThreadStart(ar.ListLine));
-            //Thread t2 = new Thread(new ThreadStart(ar.HospStatistics));
-            //t1.Start();
-            //t2.Start();
-
-            ar.PhoneSendCounts(new List<LogEntity>());
         }
 
     }

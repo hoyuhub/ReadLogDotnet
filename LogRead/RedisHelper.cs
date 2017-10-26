@@ -9,23 +9,33 @@ namespace LogRead
     public class RedisHelper
     {
 
-        public void Set(Dictionary<string,object> dic)
+        public void Set(Dictionary<string, object> dic)
         {
             using (RedisClient client = new RedisClient())
             {
-                client.Set(dic["key"].ToString(),dic);
+                client.Set(dic["key"].ToString(), dic);
             }
         }
 
 
-        public Dictionary<string,object> Get()
+        public int Get(string key)
         {
-            Dictionary<string, object> result = new Dictionary<string, object>();
+            int result = 0;
             using (RedisClient client = new RedisClient())
             {
-                result = client.Get<Dictionary<string,object>>("15:44");
+                result = client.Get<int>(key);
             }
             return result;
+        }
+
+        public bool Insert(Dictionary<string, string> dic)
+        {
+            using (RedisClient client = new RedisClient())
+            {
+                
+                return client.Set(dic["key"], dic["value"]);
+            }
+
         }
     }
 }
