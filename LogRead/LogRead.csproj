@@ -58,6 +58,7 @@
     <Compile Include="Plan B\FileReadPoint.cs" />
     <Compile Include="Plan B\MyFileReader.cs" />
     <Compile Include="Plan C\Arithmetics\Arithmetic.cs" />
+    <Compile Include="Plan C\CountDal.cs" />
     <Compile Include="Plan C\Entitys\Count.cs" />
     <Compile Include="Plan C\Entitys\LogEntity.cs" />
     <Compile Include="Program.cs" />

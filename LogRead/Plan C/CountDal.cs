@@ -17,7 +17,31 @@ namespace LogRead.Plan_C
                 int count = redis.Get(logkey);
                 if (count == 0)
                 {
+                    redis.Add(logkey, c.count);
+                }
+                else
+                {
+                    long l= redis.Delete(logkey);
+                    redis.Add(logkey, (c.count + count));
+                }
+            }
+        }
 
+
+        public void InsertPhoneCount(List<Count> list)
+        {
+            foreach (Count c in list)
+            {
+                string logkey = "log_" + c.phone + "_" + c.minutetime;
+                int count = redis.Get(logkey);
+                if (count == 0)
+                {
+                    redis.Add(logkey, c.count);
+                }
+                else
+                {
+                    long l = redis.Delete(logkey);
+                    redis.Add(logkey,(c.count+count));
                 }
             }
         }

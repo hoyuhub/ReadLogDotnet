@@ -220,9 +220,13 @@ namespace LogRead.Plan_C.Arithmetics
 
                 RedisHelper re = new RedisHelper();
                 Dictionary<string, object> dic = new Dictionary<string, object>();
-               
+                //此字段可以在定时任务执行时赋值
+                redisKeyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 dic.Add("key", "log_" + redisKeyTime);
-                dic.Add("listDayCount", listDayCount);
+                //dic.Add("listDayCount", listDayCount);
+                CountDal dal = new CountDal();
+                dal.InsertDayCount(listDayCount);
+                dal.InsertPhoneCount(listPhoneCount);
                 dic.Add("listSecondCount", listSecondCount);
                 dic.Add("listPhoneCount", listPhoneCount);
                 re.Set(dic);
@@ -231,9 +235,6 @@ namespace LogRead.Plan_C.Arithmetics
         }
 
         #endregion
-
-
-
 
         //需要指定文件路径（包括文件名称）
         public List<LogEntity> Read()

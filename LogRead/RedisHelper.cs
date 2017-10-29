@@ -18,6 +18,22 @@ namespace LogRead
         }
 
 
+        public bool Add(string key, int value)
+        {
+            using (RedisClient client = new RedisClient())
+            {
+                return client.Add(key, value);
+            }
+        }
+
+        public long Delete(string key)
+        {
+            using (RedisClient client = new RedisClient())
+            {
+                return client.Del(key);
+            }
+        }
+
         public int Get(string key)
         {
             int result = 0;
@@ -32,7 +48,7 @@ namespace LogRead
         {
             using (RedisClient client = new RedisClient())
             {
-                
+
                 return client.Set(dic["key"], dic["value"]);
             }
 
