@@ -8,8 +8,7 @@ using Newtonsoft.Json;
 using System.IO.MemoryMappedFiles;
 using LogRead.Plan_C.Entitys;
 using System.Threading;
-
-
+using ReadLog;
 
 namespace LogRead.Plan_C.Arithmetics
 {
@@ -190,14 +189,30 @@ namespace LogRead.Plan_C.Arithmetics
                             {
                                 foreach (var e3 in e2.timeGroups)
                                 {
-                                    //将按秒分组的数据取出
+                                    //将按秒分组的数据取出 判断集合中是否已经有当前类型数据，有则追加，无则添加
                                     listSecondCount.Add(new Count(e.url, e2.hospid, e3.count, e3.time));
+                                    bool thisSecond = false;
+                                    foreach (var c in listSecondCount)
+                                    {
+                                        if (c.time == e3.time && c.hospid == e2.hospid && c.url == e.url)
+                                        {
+                                            thisSecond = true;
+                                            c.count += e3.count;
+                                            break;
+                                        }
+                                    }
+                                    if (!thisSecond)
+                                    {
+                                        listSecondCount.Add(new Count(e.url, e2.hospid, e3.count, e3.time));
+                                    }
+
+
                                     string daytime = e3.time.Year + "-" + e3.time.Month + "-" + e3.time.Day;
                                     //获取每个医院每个接口当天的调用次数
                                     bool thisday = false;
                                     foreach (Count c in listDayCount)
                                     {
-                                        if (c.daytime == daytime)
+                                        if (c.daytime == daytime && c.hospid == e2.hospid && c.url == e.url)
                                         {
                                             thisday = true;
                                             c.count += e3.count;
@@ -229,12 +244,10 @@ namespace LogRead.Plan_C.Arithmetics
 
                 //在这里执行数据库插入操作
 
-                RedisHelper re = new RedisHelper();
-                Dictionary<string, object> dic = new Dictionary<string, object>();
-                CountDal dal = new CountDal();
-                dal.InsertDayCount(listDayCount);
-                dal.InsertPhoneCount(listPhoneCount);
-                dal.InsertSecondCount(listSecondCount);
+                RedisDal dal = new RedisDal();
+                dal.DayCount(listDayCount);
+                dal.SecondCount(listSecondCount);
+                dal.PhoneMinuteCount(listPhoneCount);
             }
 
         }
@@ -283,15 +296,14 @@ namespace LogRead.Plan_C.Arithmetics
         //时间单位：分钟
         public void PhoneSendCounts(List<LogEntity> list)
         {
-
-            list = GetLogEntitys();
             foreach (LogEntity l in list)
             {
                 string minuteTime = l.time.ToString("yyyy/MM/dd HH:mm:00");
                 bool thisMinute = false;
                 foreach (Count c in listPhoneCount)
                 {
-                    if (string.Compare(c.minutetime, minuteTime) == 0 && string.Compare(c.phone, l.phone) == 0)
+                    string time = c.time.ToString("yyyy/MM/dd HH:mm:00");
+                    if (string.Compare(time, minuteTime) == 0 && string.Compare(c.phone, l.phone) == 0)
                     {
                         c.count += 1;
                         thisMinute = true;
@@ -301,7 +313,7 @@ namespace LogRead.Plan_C.Arithmetics
                 if (!thisMinute)
                 {
                     if (!string.IsNullOrEmpty(l.phone))
-                        listPhoneCount.Add(new Count(l.phone, minuteTime, 1));
+                        listPhoneCount.Add(new Count(l.phone, Convert.ToDateTime(minuteTime), 1));
                 }
 
 

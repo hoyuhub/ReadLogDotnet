@@ -15,7 +15,7 @@ namespace ReadLog
         /// <summary>  
         /// redis配置文件信息  
         /// </summary>  
-        private static string RedisPath = System.Configuration.ConfigurationSettings.AppSettings["RedisPath"];
+        private static string RedisPath = "127.0.0.1:6379";
         private static PooledRedisClientManager _prcm;
 
         /// <summary>  
@@ -63,13 +63,13 @@ namespace ReadLog
         /// <summary>  
         /// 客户端缓存操作对象  
         /// </summary>  
-        public static IRedisClient GetClient()
+        public static RedisClient GetClient()
         {
             if (_prcm == null)
             {
                 CreateManager();
             }
-            return _prcm.GetClient();
+            return (RedisClient)_prcm.GetClient();
         }
 
     }

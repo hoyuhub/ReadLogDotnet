@@ -10,13 +10,14 @@ namespace ReadLog
     /// <summary>  
     /// RedisOperatorBase类，是redis操作的基类，继承自IDisposable接口，主要用于释放内存  
     /// </summary>
-    public class RedisOperatorBase: IDisposable
+    public class RedisOperatorBase : IDisposable
     {
-        protected IRedisClient Redis { get; private set; }
+        protected RedisClient Redis { get; private set; }
         private bool _disposed = false;
         protected RedisOperatorBase()
         {
             Redis = RedisManager.GetClient();
+            
         }
         protected virtual void Dispose(bool disposing)
         {
