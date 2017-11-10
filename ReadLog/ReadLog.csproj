@@ -72,7 +72,6 @@
     <Compile Include="Plan C\Arithmetics\Arithmetic.cs" />
     <Compile Include="Plan C\Entitys\Count.cs" />
     <Compile Include="Plan C\Entitys\LogEntity.cs" />
-    <Compile Include="Plan C\test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisDal.cs" />
     <Compile Include="RedisManager.cs" />

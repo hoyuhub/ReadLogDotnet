@@ -298,22 +298,26 @@ namespace LogRead.Plan_C.Arithmetics
         {
             foreach (LogEntity l in list)
             {
-                string minuteTime = l.time.ToString("yyyy/MM/dd HH:mm:00");
-                bool thisMinute = false;
-                foreach (Count c in listPhoneCount)
+                if (string.Compare(l.url, "send") == 0)
                 {
-                    string time = c.time.ToString("yyyy/MM/dd HH:mm:00");
-                    if (string.Compare(time, minuteTime) == 0 && string.Compare(c.phone, l.phone) == 0)
+
+                    string minuteTime = l.time.ToString("yyyy/MM/dd HH:mm:00");
+                    bool thisMinute = false;
+                    foreach (Count c in listPhoneCount)
                     {
-                        c.count += 1;
-                        thisMinute = true;
-                        break;
+                        string time = c.time.ToString("yyyy/MM/dd HH:mm:00");
+                        if (string.Compare(time, minuteTime) == 0 && string.Compare(c.phone, l.phone) == 0)
+                        {
+                            c.count += 1;
+                            thisMinute = true;
+                            break;
+                        }
                     }
-                }
-                if (!thisMinute)
-                {
-                    if (!string.IsNullOrEmpty(l.phone))
-                        listPhoneCount.Add(new Count(l.phone, Convert.ToDateTime(minuteTime), 1));
+                    if (!thisMinute)
+                    {
+                        if (!string.IsNullOrEmpty(l.phone))
+                            listPhoneCount.Add(new Count(l.phone, Convert.ToDateTime(minuteTime), 1));
+                    }
                 }
 
 

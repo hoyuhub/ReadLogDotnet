@@ -9,8 +9,8 @@ using System.Web.Optimization;
 using System.Web.Routing;
 using System.Timers;
 using System.Diagnostics;
-using ReadLog.Plan_C;
 using ReadLog;
+using log4net;
 
 namespace ReadLogWeb
 {
@@ -25,7 +25,9 @@ namespace ReadLogWeb
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-            OnTimedEvent();
+            log4net.Config.XmlConfigurator.Configure();
+
+            //OnTimedEvent();
             //System.Timers.Timer myTimer = new System.Timers.Timer(30000);
             //myTimer.Elapsed += new System.Timers.ElapsedEventHandler(OnTimedEvent);
             //myTimer.Interval = 60000;
@@ -47,7 +49,9 @@ namespace ReadLogWeb
             t2.Join();
             position = ar.Position;
             st.Stop();
-            TimeSpan ts= st.Elapsed;
+            ILog log = LogManager.GetLogger("LogError");
+            TimeSpan ts = st.Elapsed;
+            log.Error("这一次用时：" + ts);
         }
     }
 }

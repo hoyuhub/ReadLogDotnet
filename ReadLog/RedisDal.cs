@@ -39,8 +39,20 @@ namespace ReadLog
             {
                 string sortedSetKey = "LogSecondCount:" + list[i].hospid + ":" + list[i].url;
                 //添加时间后缀，确保成员唯一性
-                string value = list[i].count.ToString() + "_" + list[i].time.ToString();
-                Redis.ZAdd(sortedSetKey, Common.ConvertDateTimeInt(list[i].time), Encoding.Default.GetBytes(value));
+                string value = string.Empty;
+                long time = Common.ConvertDateTimeInt(list[i].time);
+                List<string> listStr = Redis.GetRangeFromSortedSetByLowestScore(sortedSetKey, time, time);
+                if (listStr.Count > 0)
+                {
+                    string[] str = listStr[0].Split('_');
+                    value = (Convert.ToInt32(str[0]) + list[i].count).ToString() + "_" + list[i].time.ToString();
+                    Redis.RemoveItemFromSortedSet(sortedSetKey, listStr[0]);
+                }
+                else
+                {
+                    value = list[i].count.ToString() + "_" + list[i].time.ToString();
+                }
+                Redis.AddItemToSortedSet(sortedSetKey, value, time);
             }
         }
 
@@ -56,8 +68,20 @@ namespace ReadLog
             for (int i = 0; i < list.Count; i++)
             {
                 string sortedSetKey = "LogPhoneMinuteCount:" + list[i].phone;
-                string value = list[i].count.ToString() + "_" + list[i].time.ToString();
-                Redis.ZAdd(sortedSetKey, Common.ConvertDateTimeInt(list[i].time), Encoding.Default.GetBytes(value));
+                string value = string.Empty;
+                long time = Common.ConvertDateTimeInt(list[i].time);
+                List<string> listStr = Redis.GetRangeFromSortedSetByLowestScore(sortedSetKey, time, time);
+                if (listStr.Count > 0)
+                {
+                    string[] str = listStr[0].Split('_');
+                    value = (Convert.ToInt32(str[0]) + list[i].count).ToString() + "_" + list[i].time.ToString();
+                    Redis.RemoveItemFromSortedSet(sortedSetKey, listStr[0]);
+                }
+                else
+                {
+                    value = list[i].count.ToString() + "_" + list[i].time.ToString();
+                }
+                Redis.AddItemToSortedSet(sortedSetKey,value,time);
             }
         }
 
