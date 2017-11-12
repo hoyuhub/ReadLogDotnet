@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="Common.cs" />
     <Compile Include="Plan C\Arithmetics\Arithmetic.cs" />
+    <Compile Include="Plan C\Arithmetics\ReadArithmetic.cs" />
     <Compile Include="Plan C\Entitys\Count.cs" />
     <Compile Include="Plan C\Entitys\LogEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
